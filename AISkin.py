@@ -9,6 +9,7 @@ import io
 import torch
 from ultralytics import YOLO
 
+
 #%% Constants
 BASE_API_URL = "https://91d4-2001-e68-5431-ce6f-b5af-bfc2-7b36-e93e.ngrok-free.app"
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
@@ -93,6 +94,8 @@ def main():
         st.session_state.messages = []
     if "input_image" not in st.session_state:
         st.session_state.input_image = None  # Store image separately
+    if "product_info" not in st.session_state:
+        st.session_state.product_info = None  # Store product info (e.g., labels or product name)
 
     # Display chat history
     for message in st.session_state.messages:
@@ -108,6 +111,9 @@ def main():
         # Process the image
         st.session_state.input_image = input_image
         prediction = predict_image(input_image)
+
+        # Store the product info (labels or product name) in session state
+        st.session_state.product_info = prediction
 
         # Add the image to the chat history
         st.session_state.messages.append(
@@ -136,7 +142,7 @@ def main():
         st.session_state.camera_input = None
         st.session_state.uploaded_file = None
 
-    # Handle text input
+    # Handle text input (follow-up question)
     query = st.chat_input("Ask your question or type your request here:")
     if query:
         # Add user query to chat history
@@ -147,10 +153,13 @@ def main():
         with st.chat_message("user", avatar="🗯️"):
             st.write(query)
 
+        # Include the product info (previous labels or product info) in the conversation history
+        history = [{"role": "user", "content": f"Product info: {st.session_state.product_info}"}] if st.session_state.product_info else []
+        
         # Get assistant response for the query
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Thinking..."):
-                assistant_response = extract_message(run_flow(query, endpoint=ENDPOINT))
+                assistant_response = extract_message(run_flow(query, endpoint=ENDPOINT, history=history))
                 st.write(assistant_response)
 
         st.session_state.messages.append(
@@ -159,8 +168,6 @@ def main():
 
         # Reset image_processed to allow new image inputs
         st.session_state.image_processed = False
-
-
 
 if __name__ == "__main__":
     main()
