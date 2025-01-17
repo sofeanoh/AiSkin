@@ -82,94 +82,84 @@ def main():
     
     with st.sidebar:
         st.title('AI Skin Care Chatbot')
-        st.markdown('This is a simple chatbot that helps you to find out more about your skin care product. You can either upload an image of your skincare product(s) or take a picture with your camera.')
+        st.markdown('This is a simple chatbot that helps you to find out more about your skincare product. You can either upload an image of your skincare product(s) or take a picture with your camera.')
         
         enable_camera = st.checkbox("Enable camera input")
         camera_picture = st.camera_input("Take a picture", disabled=not enable_camera)
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-    
+
     # Initialize session state for chat history and image storage
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "input_image" not in st.session_state:
         st.session_state.input_image = None  # Store image separately
-    
-    # Display previous messages, whether images or text
+
+    # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar=message["avatar"]):
-            if message.get("content_type", "text") == "image":  # Default to "text" if "content_type" is missing
-                st.image(message["content"])  # Display image
+            if message.get("content_type", "text") == "image":
+                st.image(message["content"])
             else:
-                st.write(message["content"])  # Display text
+                st.write(message["content"])
+    
+    # Handle image input
+    input_image = camera_picture if enable_camera and camera_picture else uploaded_file
+    if input_image and not st.session_state.input_image:
+        # Process the image
+        st.session_state.input_image = input_image
+        prediction = predict_image(input_image)
 
-
-    # Input box for user message (only text input visible after the image is processed)
-    if not st.session_state.input_image:
-        input_image = camera_picture if enable_camera and camera_picture else uploaded_file  # either camera or upload
-
-        if input_image: 
-            # Store the image in session state (to remember it across interactions)
-            st.session_state.input_image = input_image
-
-            # Add user message with image content_type
-            st.session_state.messages.append(
-                {"role": "user", 
-                 "content": input_image,
-                 "content_type": "image",  # content_type for image
-                 "avatar": "🗯️"  # emoji for user
-                } 
-            )
-
-            prediction = predict_image(input_image)
-
-            with st.chat_message("user", avatar="🗯️"):  # Display user query
-                st.image(input_image)
-                
-            # Call the Langflow API and get the assistant's response
-            with st.chat_message("assistant", avatar="🤖"):  # emoji for assistant
-                message_placeholder = st.empty()  # Placeholder for assistant response
-                with st.spinner("Waiting for response..."):
-                    assistant_response = extract_message(run_flow(prediction, endpoint=ENDPOINT))
-                    message_placeholder.write(assistant_response)  # Add assistant response to session state
-            
-            # Add assistant response to session state
-            st.session_state.messages.append(
-                {"role": "assistant", 
-                 "content": assistant_response,
-                 "content_type": "text",  # content_type for text
-                 "avatar": "🤖"  # emoji for assistant
-                }
-            )
-
-    # Only show text input after the image is processed
-    elif query := st.chat_input("Please provide your question or request here"):
-        # Add user message to chat history with 'text' content type
+        # Add the image to the chat history
         st.session_state.messages.append(
-            {"role": "user", 
-             "content": query,
-             "content_type": "text",  # content_type for text
-             "avatar": "🗯️"  # emoji for user
-            }
+            {"role": "user", "content": input_image, "content_type": "image", "avatar": "🗯️"}
         )
-        
-        with st.chat_message("user", avatar="🗯️"):  # Display user query
+
+        with st.chat_message("user", avatar="🗯️"):
+            st.image(input_image)
+
+        # Get the assistant's response
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("Analyzing image..."):
+                assistant_response = extract_message(run_flow(prediction, endpoint=ENDPOINT))
+                st.write(assistant_response)
+
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
+        )
+
+        # Mark image as processed to prevent reprocessing
+        st.session_state.input_image = None
+        st.session_state.image_processed = True  # Track that an image was handled
+        st.success("Image cleared. You can now upload another image or continue the conversation.")
+
+        # Reset the camera input and file uploader for new image upload
+        st.session_state.camera_input = None
+        st.session_state.uploaded_file = None
+
+    # Handle text input
+    query = st.chat_input("Ask your question or type your request here:")
+    if query:
+        # Add user query to chat history
+        st.session_state.messages.append(
+            {"role": "user", "content": query, "content_type": "text", "avatar": "🗯️"}
+        )
+
+        with st.chat_message("user", avatar="🗯️"):
             st.write(query)
-        
-        # Call the Langflow API and get the assistant's response
-        with st.chat_message("assistant", avatar="🤖"):  # emoji for avatar
-            message_placeholder = st.empty()  # Placeholder for assistant response
-            with st.spinner("Waiting for response..."):
+
+        # Get assistant response for the query
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("Thinking..."):
                 assistant_response = extract_message(run_flow(query, endpoint=ENDPOINT))
-                message_placeholder.write(assistant_response)  # Display assistant response
-        
-        # Add assistant response to session state with 'text' content type
+                st.write(assistant_response)
+
         st.session_state.messages.append(
-            {"role": "assistant", 
-             "content": assistant_response,
-             "content_type": "text",  # content_type for text
-             "avatar": "🤖"  # emoji for assistant
-            }
+            {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
         )
+
+        # Reset image_processed to allow new image inputs
+        st.session_state.image_processed = False
+
 
 
 if __name__ == "__main__":
