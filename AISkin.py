@@ -11,7 +11,7 @@ from ultralytics import YOLO
 
 
 #%% Constants
-BASE_API_URL = "https://91d4-2001-e68-5431-ce6f-b5af-bfc2-7b36-e93e.ngrok-free.app"
+BASE_API_URL = "https://a684-121-121-19-9.ngrok-free.app"
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
