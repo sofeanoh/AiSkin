@@ -1,2 +1,2 @@
 ultralytics
-cv2
+opencv-python
