@@ -16,10 +16,11 @@ FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
 #%% Model loading
-# Load the PyTorch model
+# Load the YOLO model
 model = YOLO('best.pt')
 model.eval()
 
+#%%
 def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type: str = "chat", history: list = []) -> dict:
     """
     Run a flow with a given message and optional tweaks.
@@ -48,32 +49,35 @@ def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type:
 
 def extract_message(response: dict) -> str:
     try:
-        # Extract response message
+        # for extracting response message
         return response['outputs'][0]['outputs'][0]['results']['message']['text']
     except (KeyError, IndexError):
         logging.error("No valid message found in the response")
         return "No valid message found in the response."
 
-# Predict the image
+#%% Predict the image
 def predict_image(image_data):
-    # Convert the image to JPEG format
+    # need to convert the image to JPEG format first
     image = Image.open(io.BytesIO(image_data.getbuffer()))
     jpeg_image = io.BytesIO()
     image.save(jpeg_image, format='JPEG')
-    jpeg_image.seek(0) # Convert to PIL Image
-    pil_image = Image.open(jpeg_image) # Run prediction
-    results = model(pil_image) # Extract the labels
+    jpeg_image.seek(0) # convert to PIL Image
+    pil_image = Image.open(jpeg_image) 
+    
+    # Run prediction
+    results = model(pil_image) 
+    
+    # etract the labels
     labels = []
     for result in results:
         for box in result.boxes:
             labels.append(result.names[box.cls.item()])
-    # Debug: Display labels
+    #Display labels
     for label in labels:
         st.write(label)
-    # Concatenate labels into a single string
+    #concatenate labels into a single string bcs we want the langflow model to take input as a string
     labels_string = ', '.join(labels)
-    # Display labels string
-    return labels_string # Return the concatenated labels string
+    return labels_string 
 
 
 def main():
@@ -89,7 +93,7 @@ def main():
         camera_picture = st.camera_input("Take a picture", disabled=not enable_camera)
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
-    # Initialize session state for chat history and image storage
+    # initialize session state for chat history and image storage
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "input_image" not in st.session_state:
@@ -97,7 +101,7 @@ def main():
     if "product_info" not in st.session_state:
         st.session_state.product_info = None  # Store product info (e.g., labels or product name)
 
-    # Display chat history
+    # display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar=message["avatar"]):
             if message.get("content_type", "text") == "image":
@@ -105,17 +109,17 @@ def main():
             else:
                 st.write(message["content"])
     
-    # Handle image input
+    # handle image input
     input_image = camera_picture if enable_camera and camera_picture else uploaded_file
     if input_image and not st.session_state.input_image:
         # Process the image
         st.session_state.input_image = input_image
         prediction = predict_image(input_image)
 
-        # Store the product info (labels or product name) in session state
+        # store the product info (labels or product name) in session state (so that it will remember if this has been asked)
         st.session_state.product_info = prediction
 
-        # Add the image to the chat history
+        # add the image to the chat history
         st.session_state.messages.append(
             {"role": "user", "content": input_image, "content_type": "image", "avatar": "🗯️"}
         )
@@ -123,7 +127,7 @@ def main():
         with st.chat_message("user", avatar="🗯️"):
             st.image(input_image)
 
-        # Get the assistant's response
+        # get the assistant's response
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Analyzing image..."):
                 assistant_response = extract_message(run_flow(prediction, endpoint=ENDPOINT))
@@ -133,7 +137,7 @@ def main():
             {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
         )
 
-        # Mark image as processed to prevent reprocessing
+        # mark image as processed to prevent reprocessing
         st.session_state.input_image = None
         st.session_state.image_processed = True  # Track that an image was handled
         st.success("Image cleared. You can now upload another image or continue the conversation.")
@@ -142,10 +146,10 @@ def main():
         st.session_state.camera_input = None
         st.session_state.uploaded_file = None
 
-    # Handle text input (follow-up question)
+    # handle text input (anyy follow-up question)
     query = st.chat_input("Ask your question or type your request here:")
     if query:
-        # Add user query to chat history
+        # add user query to chat history
         st.session_state.messages.append(
             {"role": "user", "content": query, "content_type": "text", "avatar": "🗯️"}
         )
@@ -153,10 +157,10 @@ def main():
         with st.chat_message("user", avatar="🗯️"):
             st.write(query)
 
-        # Include the product info (previous labels or product info) in the conversation history
+        # include the product info, (previous labels or product info) in the conversation history
         history = [{"role": "user", "content": f"Product info: {st.session_state.product_info}"}] if st.session_state.product_info else []
         
-        # Get assistant response for the query
+        # get assistant response for the query
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Thinking..."):
                 assistant_response = extract_message(run_flow(query, endpoint=ENDPOINT, history=history))
