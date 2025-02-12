@@ -38,7 +38,6 @@ def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type:
         "input_value": message,
         "output_type": output_type,
         "input_type": input_type,
-        "history": history
     }
     headers = None
     response = requests.post(api_url, json=payload, headers=headers)
