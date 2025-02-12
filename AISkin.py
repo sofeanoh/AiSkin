@@ -89,11 +89,11 @@ def main():
         st.title('AI Skin Care Chatbot')
         st.markdown('This is a simple chatbot that helps you to find out more about your skincare product. You can either upload an image of your skincare product(s) or take a picture with your camera.')
         
-        enable_camera = st.checkbox("Enable camera input")
+        enable_camera = st.checkbox("Enable camera input", key="camera_input")
         camera_picture = st.camera_input("Take a picture", disabled=not enable_camera)
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
-    # initialize session state for chat history and image storage
+    # Initialize session state for chat history and image storage
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "input_image" not in st.session_state:
@@ -101,7 +101,7 @@ def main():
     if "product_info" not in st.session_state:
         st.session_state.product_info = None  # Store product info (e.g., labels or product name)
 
-    # display chat history
+    # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar=message["avatar"]):
             if message.get("content_type", "text") == "image":
@@ -109,47 +109,16 @@ def main():
             else:
                 st.write(message["content"])
     
-    # handle image input
-    input_image = camera_picture if enable_camera and camera_picture else uploaded_file
-    if input_image and not st.session_state.input_image:
-        # Process the image
-        st.session_state.input_image = input_image
-        prediction = predict_image(input_image)
-
-        # store the product info (labels or product name) in session state (so that it will remember if this has been asked)
-        st.session_state.product_info = prediction
-
-        # add the image to the chat history
-        st.session_state.messages.append(
-            {"role": "user", "content": input_image, "content_type": "image", "avatar": "🗯️"}
-        )
-
-        with st.chat_message("user", avatar="🗯️"):
-            st.image(input_image)
-
-        # get the assistant's response
-        with st.chat_message("assistant", avatar="🤖"):
-            with st.spinner("Analyzing image..."):
-                assistant_response = extract_message(run_flow(prediction, endpoint=ENDPOINT))
-                st.write(assistant_response)
-
-        st.session_state.messages.append(
-            {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
-        )
-
-        # mark image as processed to prevent reprocessing
-        st.session_state.input_image = None
-        st.session_state.image_processed = True  # Track that an image was handled
-        st.success("Image cleared. You can now upload another image or continue the conversation.")
-
-        # Reset the camera input and file uploader for new image upload
-        st.session_state.camera_input = None
-        st.session_state.uploaded_file = None
-
-    # handle text input (anyy follow-up question)
+    # Handle text input (chat query first)
     query = st.chat_input("Ask your question or type your request here:")
     if query:
-        # add user query to chat history
+        # Clear image input if there's a chat query
+        st.session_state.input_image = None
+        st.session_state.image_processed = False
+        st.session_state.camera_picture = None
+        st.session_state.uploaded_file = None
+
+        # Add user query to chat history
         st.session_state.messages.append(
             {"role": "user", "content": query, "content_type": "text", "avatar": "🗯️"}
         )
@@ -157,10 +126,10 @@ def main():
         with st.chat_message("user", avatar="🗯️"):
             st.write(query)
 
-        # include the product info, (previous labels or product info) in the conversation history
+        # Include product info in history if available
         history = [{"role": "user", "content": f"Product info: {st.session_state.product_info}"}] if st.session_state.product_info else []
         
-        # get assistant response for the query
+        # Get assistant response for the query
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Thinking..."):
                 assistant_response = extract_message(run_flow(query, endpoint=ENDPOINT, history=history))
@@ -170,8 +139,37 @@ def main():
             {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
         )
 
-        # Reset image_processed to allow new image inputs
-        st.session_state.image_processed = False
+    # Handle image input (only if no chat input was made)
+    input_image = camera_picture if enable_camera and camera_picture else uploaded_file
+    if input_image and not st.session_state.input_image:
+        # Process the image
+        st.session_state.input_image = input_image
+        prediction = predict_image(input_image)
+
+        # Store product info (labels or product name)
+        st.session_state.product_info = prediction
+
+        # Add the image to the chat history
+        st.session_state.messages.append(
+            {"role": "user", "content": input_image, "content_type": "image", "avatar": "🗯️"}
+        )
+
+        with st.chat_message("user", avatar="🗯️"):
+            st.image(input_image)
+
+        # Get the assistant's response
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("Analyzing image..."):
+                assistant_response = extract_message(run_flow(prediction, endpoint=ENDPOINT))
+                st.write(assistant_response)
+
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_response, "content_type": "text", "avatar": "🤖"}
+        )
+
+if __name__ == "__main__":
+    main()
+
 
 if __name__ == "__main__":
     main()
