@@ -11,7 +11,7 @@ from ultralytics import YOLO
 
 
 #%% Constants
-BASE_API_URL = "https://sofeanoh-aiskin.hf.space" # i changed from ngrok forwarding to hugging space for a continuous deployment
+BASE_API_URL = "https://sofeanoh-aiskin.hf.space" #  i changed from ngrok forwarding to hugging space for a continuous deployment
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
