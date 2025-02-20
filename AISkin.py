@@ -36,34 +36,33 @@ model.eval()
 def run_flow(message: str,
   endpoint: str,
   output_type: str = "chat",
-  input_type: str = "chat",
-  tweaks: Optional[dict] = None,
-  api_key: Optional[str] = None) -> dict:
-    """
-    Run a flow with a given message and optional tweaks.
+  input_type: str = "chat"
+           
+  """
+  Run a flow with a given message and optional tweaks.
 
-    :param message: The message to send to the flow
-    :param endpoint: The ID or the endpoint name of the flow
-    :param tweaks: Optional tweaks to customize the flow
-    :return: The JSON response from the flow
-    """
-    api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
+  :param message: The message to send to the flow
+  :param endpoint: The ID or the endpoint name of the flow
+  :param tweaks: Optional tweaks to customize the flow
+  :return: The JSON response from the flow
+  """
+  api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
 
-    payload = {
-        "input_value": message,
-        "output_type": output_type,
-        "input_type": input_type,
-    }
-    headers = None
-    if tweaks:
-        payload["tweaks"] = tweaks
-    if api_key:
-        headers = {"x-api-key": api_key}
-    response = requests.post(api_url, json=payload, headers=headers)
-    # Log the response for debugging purpose
-    logging.info(f"Response Status Code: {response.status_code}")
-    logging.info(f"Response Text: {response.text}")
-    return response.json()
+  payload = {
+      "input_value": message,
+      "output_type": output_type,
+      "input_type": input_type,
+  }
+  headers = None
+  if tweaks:
+      payload["tweaks"] = tweaks
+  if api_key:
+      headers = {"x-api-key": api_key}
+  response = requests.post(api_url, json=payload, headers=headers)
+  # Log the response for debugging purpose
+  logging.info(f"Response Status Code: {response.status_code}")
+  logging.info(f"Response Text: {response.text}")
+  return response.json()
 
 def extract_message(response: dict) -> str:
     try:
