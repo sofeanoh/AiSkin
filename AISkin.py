@@ -10,10 +10,22 @@ import torch
 from ultralytics import YOLO
 
 
-#%% Constants
-BASE_API_URL = "https://80db-2001-e68-5431-4c14-5d9d-fa47-53f9-94a7.ngrok-free.app" 
+BASE_API_URL = "http://localhost:7860"
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
+
+# You can tweak the flow by adding a tweaks dictionary
+# e.g {"OpenAI-XXXXX": {"model_name": "gpt-4"}}
+TWEAKS = {
+  "ParseData-sEylh": {},
+  "Memory-fN7OK": {},
+  "ChatOutput-lijK1": {},
+  "ChatInput-yl30f": {},
+  "Prompt-AUrIF": {},
+  "MistralModel-YshgU": {},
+  "Chroma-Ye6sJ": {},
+  "MistalAIEmbeddings-wrihC": {}
+}
 
 #%% Model loading
 # Load the YOLO model
@@ -21,15 +33,18 @@ model = YOLO('best.pt')
 model.eval()
 
 #%%
-def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type: str = "chat", history: list = []) -> dict:
+def run_flow(message: str,
+  endpoint: str,
+  output_type: str = "chat",
+  input_type: str = "chat",
+  tweaks: Optional[dict] = None,
+  api_key: Optional[str] = None) -> dict:
     """
     Run a flow with a given message and optional tweaks.
 
     :param message: The message to send to the flow
     :param endpoint: The ID or the endpoint name of the flow
-    :param output_type: The type of output expected
-    :param input_type: The type of input provided
-    :param history: The conversation history to include
+    :param tweaks: Optional tweaks to customize the flow
     :return: The JSON response from the flow
     """
     api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
@@ -40,6 +55,10 @@ def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type:
         "input_type": input_type,
     }
     headers = None
+    if tweaks:
+        payload["tweaks"] = tweaks
+    if api_key:
+        headers = {"x-api-key": api_key}
     response = requests.post(api_url, json=payload, headers=headers)
     # Log the response for debugging purpose
     logging.info(f"Response Status Code: {response.status_code}")
