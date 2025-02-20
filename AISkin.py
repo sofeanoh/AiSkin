@@ -37,8 +37,7 @@ def run_flow(message: str,
   endpoint: str,
   output_type: str = "chat",
   input_type: str = "chat",
-  history: list = [])
-:
+  history: list = []):
            
   """
   Run a flow with a given message and optional tweaks.
