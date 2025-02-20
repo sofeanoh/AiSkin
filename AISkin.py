@@ -36,7 +36,7 @@ model.eval()
 def run_flow(message: str,
   endpoint: str,
   output_type: str = "chat",
-  input_type: str = "chat")
+  input_type: str = "chat"):
            
   """
   Run a flow with a given message and optional tweaks.
