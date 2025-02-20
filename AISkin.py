@@ -43,10 +43,6 @@ def run_flow(message: str,
       "history": history,
   }
   headers = None
-  if tweaks:
-      payload["tweaks"] = tweaks
-  if api_key:
-      headers = {"x-api-key": api_key}
   response = requests.post(api_url, json=payload, headers=headers)
   # Log the response for debugging purpose
   logging.info(f"Response Status Code: {response.status_code}")
