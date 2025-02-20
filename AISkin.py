@@ -14,19 +14,6 @@ BASE_API_URL = "https://3c1a-2001-e68-5431-4c14-5d9d-fa47-53f9-94a7.ngrok-free.a
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
-# You can tweak the flow by adding a tweaks dictionary
-# e.g {"OpenAI-XXXXX": {"model_name": "gpt-4"}}
-TWEAKS = {
-  "ParseData-sEylh": {},
-  "Memory-fN7OK": {},
-  "ChatOutput-lijK1": {},
-  "ChatInput-yl30f": {},
-  "Prompt-AUrIF": {},
-  "MistralModel-YshgU": {},
-  "Chroma-Ye6sJ": {},
-  "MistalAIEmbeddings-wrihC": {}
-}
-
 #%% Model loading
 # Load the YOLO model
 model = YOLO('best.pt')
@@ -65,6 +52,7 @@ def run_flow(message: str,
   logging.info(f"Response Status Code: {response.status_code}")
   logging.info(f"Response Text: {response.text}")
   return response.json()
+
 
 def extract_message(response: dict) -> str:
     try:
@@ -108,7 +96,7 @@ def main():
         st.title('AI Skin Care Chatbot')
         st.markdown('This is a simple chatbot that helps you to find out more about your skincare product. You can either upload an image of your skincare product(s) or take a picture with your camera.')
         
-        enable_camera = st.checkbox("Enable camera input", key="camera_input")
+        enable_camera = st.checkbox("Enable camera input")
         camera_picture = st.camera_input("Take a picture", disabled=not enable_camera)
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
