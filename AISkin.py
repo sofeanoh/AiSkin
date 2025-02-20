@@ -36,7 +36,9 @@ model.eval()
 def run_flow(message: str,
   endpoint: str,
   output_type: str = "chat",
-  input_type: str = "chat"):
+  input_type: str = "chat",
+  history: list = [])
+:
            
   """
   Run a flow with a given message and optional tweaks.
@@ -52,6 +54,7 @@ def run_flow(message: str,
       "input_value": message,
       "output_type": output_type,
       "input_type": input_type,
+      "history": history,
   }
   headers = None
   if tweaks:
