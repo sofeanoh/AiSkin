@@ -10,7 +10,7 @@ import torch
 from ultralytics import YOLO
 
 
-BASE_API_URL = "https://fffe-2001-e68-5431-4c14-e93c-6311-f6e8-4da5.ngrok-free.app"
+BASE_API_URL = "https://a38e-2001-e68-5431-4c14-e93c-6311-f6e8-4da5.ngrok-free.app "
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
