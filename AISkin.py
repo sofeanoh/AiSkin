@@ -10,8 +10,7 @@ import torch
 from ultralytics import YOLO
 
 
-#%% Constants
-BASE_API_URL = "https://sofeanoh-aiskin.hf.space" #  i changed from ngrok forwarding to hugging space for a continuous deployment
+BASE_API_URL = "https://fffe-2001-e68-5431-4c14-e93c-6311-f6e8-4da5.ngrok-free.app"
 FLOW_ID = "b62a6fd3-be02-4490-84b2-2374a84e66c2"
 ENDPOINT = "AiSkin" # The endpoint name of the flow
 
@@ -21,30 +20,35 @@ model = YOLO('best.pt')
 model.eval()
 
 #%%
-def run_flow(message: str, endpoint: str, output_type: str = "chat", input_type: str = "chat", history: list = []) -> dict:
-    """
-    Run a flow with a given message and optional tweaks.
+def run_flow(message: str,
+  endpoint: str,
+  output_type: str = "chat",
+  input_type: str = "chat",
+  history: list = []):
+           
+  """
+  Run a flow with a given message and optional tweaks.
 
-    :param message: The message to send to the flow
-    :param endpoint: The ID or the endpoint name of the flow
-    :param output_type: The type of output expected
-    :param input_type: The type of input provided
-    :param history: The conversation history to include
-    :return: The JSON response from the flow
-    """
-    api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
+  :param message: The message to send to the flow
+  :param endpoint: The ID or the endpoint name of the flow
+  :param tweaks: Optional tweaks to customize the flow
+  :return: The JSON response from the flow
+  """
+  api_url = f"{BASE_API_URL}/api/v1/run/{endpoint}"
 
-    payload = {
-        "input_value": message,
-        "output_type": output_type,
-        "input_type": input_type,
-    }
-    headers = None
-    response = requests.post(api_url, json=payload, headers=headers)
-    # Log the response for debugging purpose
-    logging.info(f"Response Status Code: {response.status_code}")
-    logging.info(f"Response Text: {response.text}")
-    return response.json()
+  payload = {
+      "input_value": message,
+      "output_type": output_type,
+      "input_type": input_type,
+      "history": history,
+  }
+  headers = None
+  response = requests.post(api_url, json=payload, headers=headers)
+  # Log the response for debugging purpose
+  logging.info(f"Response Status Code: {response.status_code}")
+  logging.info(f"Response Text: {response.text}")
+  return response.json()
+
 
 def extract_message(response: dict) -> str:
     try:
@@ -88,7 +92,7 @@ def main():
         st.title('AI Skin Care Chatbot')
         st.markdown('This is a simple chatbot that helps you to find out more about your skincare product. You can either upload an image of your skincare product(s) or take a picture with your camera.')
         
-        enable_camera = st.checkbox("Enable camera input", key="camera_input")
+        enable_camera = st.checkbox("Enable camera input")
         camera_picture = st.camera_input("Take a picture", disabled=not enable_camera)
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
